@@ -1,0 +1,18 @@
+# Docker / local data
+pgdata/
+*.pid
+
+# Logs
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local

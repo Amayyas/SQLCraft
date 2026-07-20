@@ -1,0 +1,3 @@
+-- 01-seed.sql
+-- Realistic seed data generated with generate_series + random functions.
+-- To be filled in issue #4.

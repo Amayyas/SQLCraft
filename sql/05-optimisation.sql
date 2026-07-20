@@ -1,0 +1,3 @@
+-- 05-optimisation.sql
+-- Slow query on order_items joined to orders/customers, EXPLAIN ANALYZE before/after adding an index.
+-- To be filled in issues #13 and #14.

@@ -1,0 +1,3 @@
+-- 00-schema.sql
+-- Complete DDL for the 5 tables (customers, categories, products, orders, order_items).
+-- To be filled in issue #3.

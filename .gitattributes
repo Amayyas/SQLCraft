@@ -1,0 +1,13 @@
+# Linguist configuration — keep the repo classified as majority SQL.
+# Final tuning is validated in issue #17 (Linguist verification).
+
+# Ensure SQL is always detected and counted.
+*.sql linguist-detectable=true
+*.sql linguist-language=SQL
+
+# Ancillary / non-source files should not skew the language stats.
+docs/**      linguist-documentation
+*.md         linguist-documentation
+
+# Normalize line endings.
+* text=auto eol=lf

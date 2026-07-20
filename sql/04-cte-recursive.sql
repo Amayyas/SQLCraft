@@ -1,0 +1,3 @@
+-- 04-cte-recursive.sql
+-- Recursive CTEs over the category hierarchy (walk up and walk down).
+-- To be filled in issues #11 and #12.

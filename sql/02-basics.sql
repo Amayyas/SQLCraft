@@ -1,0 +1,3 @@
+-- 02-basics.sql
+-- Basic SQL: joins, aggregations, GROUP BY / HAVING, simple subqueries.
+-- To be filled in issues #5 and #6.
