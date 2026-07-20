@@ -1,0 +1,29 @@
+# PostgreSQL service for sqlcraft.
+# One-command start:  docker compose up -d
+# Then run the sql/ scripts in order (see README). The sql/ folder is mounted
+# read-only at /sql inside the container, so scripts are run manually via psql
+# rather than auto-executed at init — this keeps the ordered, sectioned flow
+# explicit and lets you re-run any single file on demand.
+
+services:
+  db:
+    image: postgres:16
+    container_name: sqlcraft-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sqlcraft}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sqlcraft}
+      POSTGRES_DB: ${POSTGRES_DB:-sqlcraft}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql:/sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sqlcraft} -d ${POSTGRES_DB:-sqlcraft}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
