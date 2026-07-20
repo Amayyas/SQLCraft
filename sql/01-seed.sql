@@ -71,28 +71,35 @@ FROM generate_series(1, 500) AS g;
 -- ---------------------------------------------------------------------------
 -- products: 300 rows, each attached to a randomly chosen LEAF category
 -- (a category with no children), with a realistic price between 10 and 500.
+-- The leaf-id array is CROSS JOINed into the row (not read via a scalar
+-- subquery): indexing it inline keeps random() volatile and re-evaluated per
+-- product, so categories are distributed instead of all pointing to one.
 WITH leaves AS (
-    SELECT array_agg(c.id) AS ids
+    SELECT array_agg(c.id) AS ids, count(*) AS n
     FROM categories c
     WHERE NOT EXISTS (SELECT 1 FROM categories ch WHERE ch.parent_category_id = c.id)
 )
 INSERT INTO products (name, category_id, price)
 SELECT
     'Product ' || g,
-    (SELECT ids[1 + floor(random() * array_length(ids, 1))::int] FROM leaves),
+    l.ids[1 + floor(random() * l.n)::int],
     round((random() * 490 + 10)::numeric, 2)
-FROM generate_series(1, 300) AS g;
+FROM generate_series(1, 300) AS g
+CROSS JOIN leaves AS l;
 
 -- ---------------------------------------------------------------------------
 -- orders: 4000 rows, random customer, order_date over the last ~2 years,
 -- random lifecycle status.
-WITH cust AS (SELECT array_agg(id) AS ids FROM customers)
+-- Same pattern as products: CROSS JOIN the customer-id array and index it
+-- inline so each order gets an independently random customer.
+WITH cust AS (SELECT array_agg(id) AS ids, count(*) AS n FROM customers)
 INSERT INTO orders (customer_id, order_date, status)
 SELECT
-    (SELECT ids[1 + floor(random() * array_length(ids, 1))::int] FROM cust),
+    cu.ids[1 + floor(random() * cu.n)::int],
     now() - (random() * interval '730 days'),
     (ARRAY['pending','paid','shipped','delivered','cancelled'])[1 + floor(random() * 5)::int]
-FROM generate_series(1, 4000) AS g;
+FROM generate_series(1, 4000) AS g
+CROSS JOIN cust AS cu;
 
 -- ---------------------------------------------------------------------------
 -- order_items: for each order, 1-12 distinct random products. unit_price is
