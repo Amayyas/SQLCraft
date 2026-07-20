@@ -38,3 +38,31 @@ SELECT
     DENSE_RANK() OVER (ORDER BY revenue DESC) AS revenue_dense_rank
 FROM customer_revenue
 ORDER BY revenue DESC;
+
+-- ---------------------------------------------------------------------------
+-- Q2. Running total of revenue, month by month.
+-- "What is the cumulative revenue over time?" First aggregate revenue per month
+-- in a CTE, then apply a windowed SUM() ordered by month to accumulate it.
+--
+-- The frame ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW makes each row sum
+-- every month up to and including itself — i.e. a running (cumulative) total.
+-- It is the default frame for SUM() OVER (ORDER BY ...), but it is spelled out
+-- here to make the intent explicit.
+WITH monthly_revenue AS (
+    SELECT
+        date_trunc('month', o.order_date) AS month,
+        SUM(oi.quantity * oi.unit_price)  AS revenue
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.status <> 'cancelled'
+    GROUP BY date_trunc('month', o.order_date)
+)
+SELECT
+    month,
+    revenue,
+    SUM(revenue) OVER (
+        ORDER BY month
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
+FROM monthly_revenue
+ORDER BY month;
