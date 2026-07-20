@@ -66,3 +66,37 @@ SELECT
     ) AS running_total
 FROM monthly_revenue
 ORDER BY month;
+
+-- ---------------------------------------------------------------------------
+-- Q3. Month-over-month revenue evolution, with LAG() and LEAD().
+-- "How does each month compare to the previous one?" LAG() reads the previous
+-- month's revenue on the same row so we can compute the absolute delta and the
+-- growth percentage; LEAD() peeks at the next month for context.
+--
+-- Edge cases:
+--   * The first month has no previous row: LAG() is NULL, so the delta and the
+--     growth % are NULL (nothing to compare against).
+--   * NULLIF(prev, 0) guards against a division by zero if a month's revenue
+--     were ever 0.
+WITH monthly_revenue AS (
+    SELECT
+        date_trunc('month', o.order_date) AS month,
+        SUM(oi.quantity * oi.unit_price)  AS revenue
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.status <> 'cancelled'
+    GROUP BY date_trunc('month', o.order_date)
+)
+SELECT
+    month,
+    revenue,
+    LAG(revenue)  OVER (ORDER BY month) AS prev_month_revenue,
+    LEAD(revenue) OVER (ORDER BY month) AS next_month_revenue,
+    revenue - LAG(revenue) OVER (ORDER BY month) AS mom_delta,
+    ROUND(
+        (revenue - LAG(revenue) OVER (ORDER BY month))
+        / NULLIF(LAG(revenue) OVER (ORDER BY month), 0) * 100,
+        2
+    ) AS mom_growth_pct
+FROM monthly_revenue
+ORDER BY month;
