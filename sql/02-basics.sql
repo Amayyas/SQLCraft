@@ -38,3 +38,44 @@ WHERE o.status <> 'cancelled'
 GROUP BY p.id, p.name
 ORDER BY units_sold DESC
 LIMIT 10;
+
+-- ---------------------------------------------------------------------------
+-- Q3. Orders and revenue per country, for the busier markets only.
+-- "Which countries drive the business?" Grouped by the customer's country;
+-- HAVING keeps only countries with more than 300 orders (a filter applied
+-- after aggregation, unlike WHERE).
+SELECT
+    c.country,
+    COUNT(DISTINCT o.id)              AS orders_count,
+    SUM(oi.quantity * oi.unit_price)  AS revenue
+FROM customers c
+JOIN orders o       ON o.customer_id = c.id
+JOIN order_items oi ON oi.order_id = o.id
+WHERE o.status <> 'cancelled'
+GROUP BY c.country
+HAVING COUNT(DISTINCT o.id) > 300
+ORDER BY revenue DESC;
+
+-- ---------------------------------------------------------------------------
+-- Q4. Average basket (order value) per month.
+-- "How does the typical order value evolve month by month?" Order value is the
+-- sum of its line items; we first compute the total per order in a CTE, then
+-- average those totals grouped by month. date_trunc('month', ...) buckets the
+-- orders by calendar month.
+WITH order_totals AS (
+    SELECT
+        o.id,
+        date_trunc('month', o.order_date) AS month,
+        SUM(oi.quantity * oi.unit_price)  AS order_value
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    WHERE o.status <> 'cancelled'
+    GROUP BY o.id, date_trunc('month', o.order_date)
+)
+SELECT
+    month,
+    COUNT(*)                 AS orders_count,
+    ROUND(AVG(order_value), 2) AS avg_basket
+FROM order_totals
+GROUP BY month
+ORDER BY month;
