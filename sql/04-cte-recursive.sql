@@ -67,3 +67,71 @@ WITH RECURSIVE ancestors AS (
 )
 SELECT string_agg(name, ' > ' ORDER BY depth DESC) AS category_path
 FROM ancestors;
+
+-- ---------------------------------------------------------------------------
+-- Q2. All products in a category AND all of its sub-categories, walking DOWN.
+-- "Show me everything sold under the Electronics branch, however deeply nested."
+-- This is the mirror image of Q1: a storefront category page must include the
+-- products of every descendant category, not just the ones directly attached.
+--
+-- The join direction is what flips:
+--   * Q1 climbed with categories.id = ancestors.parent_category_id (child -> parent).
+--   * Q2 descends with child.parent_category_id = subtree.id       (parent -> child).
+-- The anchor is the starting category; the recursive term collects its children,
+-- then their children, and so on until no descendant is left.
+--
+-- Change the category below to explore another branch.
+WITH RECURSIVE subtree AS (
+    -- anchor: the starting category itself
+    SELECT
+        c.id,
+        c.name,
+        c.parent_category_id,
+        0 AS depth
+    FROM categories c
+    WHERE c.name = 'Electronics'         -- <-- the category branch to expand
+
+    UNION ALL
+
+    -- recursive: step one level down, from parent to child
+    SELECT
+        child.id,
+        child.name,
+        child.parent_category_id,
+        s.depth + 1
+    FROM subtree s
+    JOIN categories child ON child.parent_category_id = s.id
+)
+SELECT
+    s.depth,
+    s.name  AS category_name,
+    p.id    AS product_id,
+    p.name  AS product_name,
+    p.price
+FROM subtree s
+JOIN products p ON p.category_id = s.id
+ORDER BY s.depth, s.name, p.name;
+
+-- ---------------------------------------------------------------------------
+-- Q2b. Same subtree, summarised: how many products sit in each (sub-)category.
+-- LEFT JOIN keeps intermediate categories that hold no product directly (in this
+-- schema products are attached to leaves, so parent nodes legitimately show 0).
+WITH RECURSIVE subtree AS (
+    SELECT c.id, c.name, c.parent_category_id, 0 AS depth
+    FROM categories c
+    WHERE c.name = 'Electronics'         -- <-- the category branch to expand
+
+    UNION ALL
+
+    SELECT child.id, child.name, child.parent_category_id, s.depth + 1
+    FROM subtree s
+    JOIN categories child ON child.parent_category_id = s.id
+)
+SELECT
+    s.depth,
+    s.name          AS category_name,
+    COUNT(p.id)     AS products_count
+FROM subtree s
+LEFT JOIN products p ON p.category_id = s.id
+GROUP BY s.depth, s.name
+ORDER BY s.depth, s.name;
