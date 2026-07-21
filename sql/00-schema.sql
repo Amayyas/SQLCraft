@@ -1,5 +1,5 @@
 -- 00-schema.sql
--- Complete DDL for the sqlcraft e-commerce schema (5 tables).
+-- Complete DDL for the SQLCraft e-commerce schema (5 tables).
 -- Run first, before 01-seed.sql. Comments are in English (project convention).
 --
 -- Tables are dropped in reverse dependency order so the script is re-runnable.
