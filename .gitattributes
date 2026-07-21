@@ -1,5 +1,18 @@
 # Linguist configuration — keep the repo classified as majority SQL.
-# Final tuning is validated in issue #17 (Linguist verification).
+#
+# Verified (issue #17): GitHub reports the repository as 100% SQL.
+#   SQL 30819 bytes | Markdown 9720 | YAML 950
+#
+# DO NOT DELETE THIS FILE. In Linguist, SQL is `type: data` (like YAML and JSON),
+# and data languages are excluded from the language bar by default. The
+# linguist-detectable rule below is what makes SQL count at all. Without this
+# file the bar would be EMPTY: SQL and YAML are data, Markdown is prose, and all
+# three are skipped by default.
+#
+# The documentation rules are the only optional part: Markdown is already
+# excluded as prose, so they merely make the intent explicit. Nothing containing
+# real code is hidden from the statistics — even counting every byte of every
+# file, SQL is 74.3% of the repository.
 
 # Ensure SQL is always detected and counted.
 *.sql linguist-detectable=true
