@@ -100,3 +100,49 @@ SELECT
     ) AS mom_growth_pct
 FROM monthly_revenue
 ORDER BY month;
+
+-- ---------------------------------------------------------------------------
+-- Q4. Best-selling product in each category (top-N per group, N = 1).
+-- "What is the flagship product of every category?" Sales are aggregated per
+-- product, then ROW_NUMBER() numbers the products inside each category and we
+-- keep only number 1.
+--
+-- Two things worth noting:
+--   * A window function cannot be used in WHERE (it is evaluated after WHERE),
+--     so the ranking is computed in a CTE and filtered as rn = 1 in the outer
+--     query. This is the canonical "top-N per group" pattern.
+--   * ROW_NUMBER() is preferred over RANK() here: it always yields exactly one
+--     winner per category, whereas RANK() would return several rows on a tie.
+--     The id tiebreaker in ORDER BY makes the pick deterministic.
+WITH product_sales AS (
+    SELECT
+        p.id                             AS product_id,
+        p.name                           AS product_name,
+        p.category_id,
+        cat.name                         AS category_name,
+        SUM(oi.quantity)                 AS units_sold,
+        SUM(oi.quantity * oi.unit_price) AS revenue
+    FROM products p
+    JOIN categories cat ON cat.id = p.category_id
+    JOIN order_items oi ON oi.product_id = p.id
+    JOIN orders o       ON o.id = oi.order_id
+    WHERE o.status <> 'cancelled'
+    GROUP BY p.id, p.name, p.category_id, cat.name
+),
+ranked_products AS (
+    SELECT
+        product_sales.*,
+        ROW_NUMBER() OVER (
+            PARTITION BY category_id
+            ORDER BY units_sold DESC, product_id
+        ) AS rn
+    FROM product_sales
+)
+SELECT
+    category_name,
+    product_name,
+    units_sold,
+    revenue
+FROM ranked_products
+WHERE rn = 1
+ORDER BY units_sold DESC;
