@@ -1,4 +1,4 @@
-# PostgreSQL service for sqlcraft.
+# PostgreSQL service for SQLCraft.
 # One-command start:  docker compose up -d
 # Then run the sql/ scripts in order (see README). The sql/ folder is mounted
 # read-only at /sql inside the container, so scripts are run manually via psql
