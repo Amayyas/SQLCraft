@@ -1,6 +1,6 @@
 # Schema diagram
 
-The sqlcraft dataset is a simplified but realistic e-commerce model: customers place
+The SQLCraft dataset is a simplified but realistic e-commerce model: customers place
 orders, orders are made of line items, line items point at products, and products are
 organised in a nested category tree.
 
